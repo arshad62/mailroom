@@ -14,3 +14,11 @@ Tea enthusiasts who want curated loose-leaf teas delivered monthly
 - CLAUDE.md that imports AGENTS.md
 - Git repository
 - Public GitHub repository called "mailroom"
+
+## Step 1 - Count Subscribers
+
+### Expected Results
+- Total subscribers: 24
+- tea-curious: 8
+- gift-buyers: 8
+- daily-drinkers: 8
