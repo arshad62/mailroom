@@ -22,3 +22,10 @@ Tea enthusiasts who want curated loose-leaf teas delivered monthly
 - tea-curious: 8
 - gift-buyers: 8
 - daily-drinkers: 8
+
+## Step 2 - Dates
+
+### Expected Results (run date: 2026-11-20)
+- Subscribers in last 30 days: 7 (includes 2026-10-21)
+- Next send (first Monday of next month): 2026-12-07
+- Send after that (run date 2026-12-07): 2027-01-04
