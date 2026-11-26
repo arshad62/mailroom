@@ -48,3 +48,13 @@ Tea enthusiasts who want curated loose-leaf teas delivered monthly
 - 7 tests total (one per behavior from checks.py)
 - Tests named for what they check
 - checks.py deleted
+
+## Step 5 - check_subject
+
+### Expected Test Cases (6 cases)
+1. "The Steep Club opens Monday" → []
+2. "Your Steep Club box ships on Monday with new teas." (50 chars) → []
+3. "Your Steep Club box ships on Monday with fresh teas" (51 chars) → ["too long"]
+4. "" (empty) → ["empty"]
+5. "   " (only spaces) → ["empty"]
+6. (no Subject line) → ["missing"]

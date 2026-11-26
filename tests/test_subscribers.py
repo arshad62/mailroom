@@ -2,7 +2,7 @@
 """Tests for subscriber counting functions."""
 
 from datetime import date
-from mailroom import count_subscribers, count_by_group, count_since_days, next_send_date
+from mailroom import count_subscribers, count_by_group, count_since_days, next_send_date, check_subject
 
 
 def test_count_subscribers():
@@ -48,3 +48,48 @@ def test_next_send_date_from_dec_7():
     run_date = date(2026, 12, 7)
     next_send = next_send_date(run_date)
     assert next_send == date(2027, 1, 4), f"Expected 2027-01-04, got {next_send}"
+
+
+# Step 5: check_subject tests
+def test_check_subject_normal():
+    """Normal subject under 50 chars."""
+    issue = "Subject: The Steep Club opens Monday\n\nBody"
+    assert check_subject(issue) == []
+
+
+def test_check_subject_exactly_50():
+    """Subject exactly 50 chars is OK."""
+    issue = "Subject: Your Steep Club box ships on Monday with new teas.\n\nBody"
+    assert check_subject(issue) == []
+
+
+def test_check_subject_51_chars():
+    """Subject 51 chars is too long."""
+    issue = "Subject: Your Steep Club box ships on Monday with fresh teas\n\nBody"
+    problems = check_subject(issue)
+    assert len(problems) == 1
+    assert "too long" in problems[0]
+
+
+def test_check_subject_empty():
+    """Empty subject is a problem."""
+    issue = "Subject: \n\nBody"
+    problems = check_subject(issue)
+    assert len(problems) == 1
+    assert "empty" in problems[0]
+
+
+def test_check_subject_only_spaces():
+    """Subject with only spaces is empty."""
+    issue = "Subject:    \n\nBody"
+    problems = check_subject(issue)
+    assert len(problems) == 1
+    assert "empty" in problems[0]
+
+
+def test_check_subject_missing():
+    """Missing Subject line is a problem."""
+    issue = "No subject here\n\nBody"
+    problems = check_subject(issue)
+    assert len(problems) == 1
+    assert "missing" in problems[0]

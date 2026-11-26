@@ -5,6 +5,7 @@ import csv
 import sys
 from datetime import date, timedelta
 from pathlib import Path
+from typing import List
 
 
 def count_subscribers(csv_path: str) -> int:
@@ -49,6 +50,33 @@ def next_send_date(run_date: date) -> date:
     # Find first Monday (weekday 0 = Monday)
     days_ahead = (0 - first_of_next.weekday()) % 7
     return first_of_next + timedelta(days=days_ahead)
+
+
+def check_subject(issue_text: str) -> List[str]:
+    """Check subject line: max 50 chars, not empty, must exist."""
+    problems: List[str] = []
+
+    lines = issue_text.splitlines()
+    subject_line = None
+    for line in lines:
+        if line.startswith("Subject:"):
+            subject_line = line
+            break
+
+    if subject_line is None:
+        problems.append("missing")
+        return problems
+
+    subject = subject_line[len("Subject:"):].strip()
+
+    if not subject:
+        problems.append("empty")
+        return problems
+
+    if len(subject) > 50:
+        problems.append("too long")
+
+    return problems
 
 
 def parse_run_date(arg: str | None) -> date:
