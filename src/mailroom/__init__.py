@@ -58,24 +58,24 @@ def check_subject(issue_text: str) -> List[str]:
     problems: List[str] = []
 
     lines = issue_text.splitlines()
-    subject_line = None
-    for line in lines:
+    subject_line_idx = None
+    for idx, line in enumerate(lines):
         if line.startswith("Subject:"):
-            subject_line = line
+            subject_line_idx = idx
             break
 
-    if subject_line is None:
-        problems.append("missing")
+    if subject_line_idx is None:
+        problems.append("1: missing")
         return problems
 
-    subject = subject_line[len("Subject:"):].strip()
+    subject = lines[subject_line_idx][len("Subject:"):].strip()
 
     if not subject:
-        problems.append("empty")
+        problems.append(f"{subject_line_idx + 1}: empty")
         return problems
 
     if len(subject) > 50:
-        problems.append("too long")
+        problems.append(f"{subject_line_idx + 1}: too long")
 
     return problems
 
@@ -85,20 +85,20 @@ def check_preview(issue_text: str) -> List[str]:
     problems: List[str] = []
 
     lines = issue_text.splitlines()
-    preview_line = None
-    for line in lines:
+    preview_line_idx = None
+    for idx, line in enumerate(lines):
         if line.startswith("Preview:"):
-            preview_line = line
+            preview_line_idx = idx
             break
 
-    if preview_line is None:
-        problems.append("missing preview")
+    if preview_line_idx is None:
+        problems.append(f"{preview_line_idx + 1}: missing preview")
         return problems
 
-    preview = preview_line[len("Preview:"):].strip()
+    preview = lines[preview_line_idx][len("Preview:"):].strip()
 
     if len(preview) > 90:
-        problems.append("preview too long")
+        problems.append(f"{preview_line_idx + 1}: preview too long")
 
     return problems
 
@@ -107,8 +107,18 @@ def check_greeting(issue_text: str) -> List[str]:
     """Check for {{first_name}} in body."""
     problems: List[str] = []
 
+    lines = issue_text.splitlines()
     if "{{first_name}}" not in issue_text:
-        problems.append("missing greeting")
+        # Find the first non-header line (after Subject: and Preview:)
+        body_start = 0
+        for idx, line in enumerate(lines):
+            if line.startswith("Subject:") or line.startswith("Preview:"):
+                body_start = idx + 1
+            elif line.strip() == "":
+                body_start = idx + 1
+            else:
+                break
+        problems.append(f"{body_start + 1}: missing greeting")
 
     return problems
 
@@ -117,13 +127,17 @@ def check_links(issue_text: str) -> List[str]:
     """Check for exactly one link in [text](url) format."""
     problems: List[str] = []
 
-    # Find markdown links: [text](url)
-    links = re.findall(r'\[([^\]]+)\]\(([^)]+)\)', issue_text)
+    lines = issue_text.splitlines()
+    link_lines = []
+    for idx, line in enumerate(lines):
+        if re.search(r'\[([^\]]+)\]\(([^)]+)\)', line):
+            link_lines.append(idx + 1)
 
-    if len(links) == 0:
-        problems.append("missing link")
-    elif len(links) > 1:
-        problems.append("too many links")
+    if len(link_lines) == 0:
+        problems.append("1: missing link")
+    elif len(link_lines) > 1:
+        for ln in link_lines:
+            problems.append(f"{ln}: too many links")
 
     return problems
 
@@ -135,15 +149,21 @@ def check_footer(issue_text: str) -> List[str]:
     lines = issue_text.splitlines()
     has_getting_this = False
     has_unsubscribe = False
+    getting_this_line = 0
+    unsubscribe_line = 0
 
-    for line in lines:
+    for idx, line in enumerate(lines):
         if line.startswith("You're getting this because"):
             has_getting_this = True
+            getting_this_line = idx + 1
         if "Unsubscribe:" in line and "{{unsubscribe_url}}" in line:
             has_unsubscribe = True
+            unsubscribe_line = idx + 1
 
-    if not has_getting_this or not has_unsubscribe:
-        problems.append("missing footer")
+    if not has_getting_this:
+        problems.append(f"{len(lines) + 1}: missing footer (no 'You're getting this because')")
+    if not has_unsubscribe:
+        problems.append(f"{len(lines) + 1}: missing footer (no Unsubscribe with {{unsubscribe_url}})")
 
     return problems
 
