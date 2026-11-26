@@ -58,3 +58,15 @@ Tea enthusiasts who want curated loose-leaf teas delivered monthly
 4. "" (empty) → ["empty"]
 5. "   " (only spaces) → ["empty"]
 6. (no Subject line) → ["missing"]
+
+## Step 6 - Check other rules + check command
+
+### Expected Test Cases (5 cases)
+1. issues/issue-01.md → []
+2. Preview 91 chars → ["preview too long"]
+3. No {{first_name}} in body → ["missing greeting"]
+4. Two links → ["too many links"]
+5. No footer and no greeting → ["missing greeting", "missing footer"]
+
+### New command
+- `uv run mailroom check <issue file>` prints problems (one per line) and exits 1, or prints OK and exits 0

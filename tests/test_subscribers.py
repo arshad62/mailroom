@@ -2,7 +2,7 @@
 """Tests for subscriber counting functions."""
 
 from datetime import date
-from mailroom import count_subscribers, count_by_group, count_since_days, next_send_date, check_subject
+from mailroom import count_subscribers, count_by_group, count_since_days, next_send_date, check_subject, check_issue
 
 
 def test_count_subscribers():
@@ -93,3 +93,67 @@ def test_check_subject_missing():
     problems = check_subject(issue)
     assert len(problems) == 1
     assert "missing" in problems[0]
+
+
+# Step 6: check_issue tests
+def test_check_issue_valid():
+    """issue-01.md passes all checks."""
+    with open("issues/issue-01.md", "r") as f:
+        issue = f.read()
+    assert check_issue(issue) == []
+
+
+def test_check_issue_preview_too_long():
+    """Preview over 90 chars fails."""
+    issue = """Subject: Test
+Preview: """ + "x" * 91 + """
+
+Hi {{first_name}},
+[Link](https://example.com)
+
+You're getting this because...
+Unsubscribe: {{unsubscribe_url}}"""
+    problems = check_issue(issue)
+    assert any("preview" in p.lower() for p in problems)
+
+
+def test_check_issue_missing_greeting():
+    """Missing {{first_name}} fails."""
+    issue = """Subject: Test
+Preview: Short preview
+
+Hi there,
+[Link](https://example.com)
+
+You're getting this because...
+Unsubscribe: {{unsubscribe_url}}"""
+    problems = check_issue(issue)
+    assert any("greeting" in p.lower() or "first_name" in p.lower() for p in problems)
+
+
+def test_check_issue_two_links():
+    """Two links fails."""
+    issue = """Subject: Test
+Preview: Short preview
+
+Hi {{first_name}},
+[Link 1](https://example.com)
+[Link 2](http://another.com)
+
+You're getting this because...
+Unsubscribe: {{unsubscribe_url}}"""
+    problems = check_issue(issue)
+    assert any("link" in p.lower() for p in problems)
+
+
+def test_check_issue_missing_footer_and_greeting():
+    """Missing footer and greeting gives two problems."""
+    issue = """Subject: Test
+Preview: Short preview
+
+Hi there,
+[Link](https://example.com)"""
+    problems = check_issue(issue)
+    assert len(problems) >= 2
+    assert any("greeting" in p.lower() or "first_name" in p.lower() for p in problems)
+    assert any("footer" in p.lower() or "unsubscribe" in p.lower() for p in problems)

@@ -2,6 +2,7 @@
 """Mailroom - Kettlebird Tea's Steep Club newsletter tool."""
 
 import csv
+import re
 import sys
 from datetime import date, timedelta
 from pathlib import Path
@@ -79,6 +80,85 @@ def check_subject(issue_text: str) -> List[str]:
     return problems
 
 
+def check_preview(issue_text: str) -> List[str]:
+    """Check preview line: max 90 chars, must exist."""
+    problems: List[str] = []
+
+    lines = issue_text.splitlines()
+    preview_line = None
+    for line in lines:
+        if line.startswith("Preview:"):
+            preview_line = line
+            break
+
+    if preview_line is None:
+        problems.append("missing preview")
+        return problems
+
+    preview = preview_line[len("Preview:"):].strip()
+
+    if len(preview) > 90:
+        problems.append("preview too long")
+
+    return problems
+
+
+def check_greeting(issue_text: str) -> List[str]:
+    """Check for {{first_name}} in body."""
+    problems: List[str] = []
+
+    if "{{first_name}}" not in issue_text:
+        problems.append("missing greeting")
+
+    return problems
+
+
+def check_links(issue_text: str) -> List[str]:
+    """Check for exactly one link in [text](url) format."""
+    problems: List[str] = []
+
+    # Find markdown links: [text](url)
+    links = re.findall(r'\[([^\]]+)\]\(([^)]+)\)', issue_text)
+
+    if len(links) == 0:
+        problems.append("missing link")
+    elif len(links) > 1:
+        problems.append("too many links")
+
+    return problems
+
+
+def check_footer(issue_text: str) -> List[str]:
+    """Check for required footer lines."""
+    problems: List[str] = []
+
+    lines = issue_text.splitlines()
+    has_getting_this = False
+    has_unsubscribe = False
+
+    for line in lines:
+        if line.startswith("You're getting this because"):
+            has_getting_this = True
+        if "Unsubscribe:" in line and "{{unsubscribe_url}}" in line:
+            has_unsubscribe = True
+
+    if not has_getting_this or not has_unsubscribe:
+        problems.append("missing footer")
+
+    return problems
+
+
+def check_issue(issue_text: str) -> List[str]:
+    """Check all rules for an issue."""
+    problems: List[str] = []
+    problems.extend(check_subject(issue_text))
+    problems.extend(check_preview(issue_text))
+    problems.extend(check_greeting(issue_text))
+    problems.extend(check_links(issue_text))
+    problems.extend(check_footer(issue_text))
+    return problems
+
+
 def parse_run_date(arg: str | None) -> date:
     """Parse run date from command line, default to today."""
     if arg:
@@ -126,6 +206,21 @@ def main() -> None:
     elif command == "next-send":
         send_date = next_send_date(run_date)
         print(send_date.isoformat())
+
+    elif command == "check":
+        if len(args) < 1:
+            print("Usage: mailroom check <issue file>")
+            sys.exit(1)
+        issue_file = args[0]
+        with open(issue_file, "r") as f:
+            issue_text = f.read()
+        problems = check_issue(issue_text)
+        if problems:
+            for p in problems:
+                print(p)
+            sys.exit(1)
+        else:
+            print("OK")
 
     else:
         print(f"Unknown command: {command}")
