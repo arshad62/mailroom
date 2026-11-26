@@ -157,3 +157,14 @@ Hi there,
     assert len(problems) >= 2
     assert any("greeting" in p.lower() or "first_name" in p.lower() for p in problems)
     assert any("footer" in p.lower() or "unsubscribe" in p.lower() for p in problems)
+
+
+# Step 7: Emoji length test
+def test_check_subject_emoji():
+    """Emoji subject counts as Python len() (codepoints)."""
+    # 👍🏽 is 2 codepoints (U+1F44D + U+1F3FD)
+    subject = "👍🏽 Thanks for joining"
+    assert len(subject) == 21  # Python counts codepoints
+    issue = f"Subject: {subject}\n\nBody"
+    problems = check_subject(issue)
+    assert problems == []  # 21 <= 50, so OK

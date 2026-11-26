@@ -70,3 +70,10 @@ Tea enthusiasts who want curated loose-leaf teas delivered monthly
 
 ### New command
 - `uv run mailroom check <issue file>` prints problems (one per line) and exits 1, or prints OK and exits 0
+
+## Step 7 - Emoji length judgment
+
+### Prediction
+- Python len(): 21 (counts codepoints: 👍 = U+1F44D, 🏽 = U+1F3FD, space, 18 text chars)
+- Reader sees: ~20 visual characters (1 emoji cluster + 19 text chars)
+- Two ways to count: codepoints (len()) vs grapheme clusters (visual)
