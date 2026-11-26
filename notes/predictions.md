@@ -37,3 +37,14 @@ Tea enthusiasts who want curated loose-leaf teas delivered monthly
 - Last line of error: `ValueError: day is out of range for month`
 - Function named in error: `count_since_days` (line 35 in mailroom/__init__.py)
 - The error does not say which row it was
+
+### Modify: Column renamed to "joined"
+- Error: `KeyError: 'joined_on'` at line 35 in count_since_days
+- The code expects column "joined_on" but CSV has "joined"
+
+## Step 4 - Tests first (pytest)
+
+### Prediction
+- 7 tests total (one per behavior from checks.py)
+- Tests named for what they check
+- checks.py deleted
