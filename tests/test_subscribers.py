@@ -168,3 +168,25 @@ def test_check_subject_emoji():
     issue = f"Subject: {subject}\n\nBody"
     problems = check_subject(issue)
     assert problems == []  # 21 <= 50, so OK
+
+
+# Step 7 modify: Greeting format decision
+def test_check_greeting_exact_format():
+    """Greeting must be exactly {{first_name}} - no alternatives."""
+    # These should FAIL (missing greeting)
+    for alt in ["{{firstName}}", "{{first name}}", "{{FIRST_NAME}}", "{{ name }}"]:
+        issue = f"Subject: Test\nPreview: Short\n\nHi {alt},\n[Link](https://example.com)\n\nYou're getting this because...\nUnsubscribe: {{unsubscribe_url}}"
+        problems = check_issue(issue)
+        assert any("greeting" in p.lower() or "first_name" in p.lower() for p in problems), f"Should fail for {alt}"
+
+    # This should PASS
+    issue = """Subject: Test
+Preview: Short
+
+Hi {{first_name}},
+[Link](https://example.com)
+
+You're getting this because...
+Unsubscribe: {{unsubscribe_url}}"""
+    problems = check_issue(issue)
+    assert not any("greeting" in p.lower() or "first_name" in p.lower() for p in problems)

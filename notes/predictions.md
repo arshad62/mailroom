@@ -77,3 +77,8 @@ Tea enthusiasts who want curated loose-leaf teas delivered monthly
 - Python len(): 21 (counts codepoints: 👍 = U+1F44D, 🏽 = U+1F3FD, space, 18 text chars)
 - Reader sees: ~20 visual characters (1 emoji cluster + 19 text chars)
 - Two ways to count: codepoints (len()) vs grapheme clusters (visual)
+
+### Modify: Greeting format decision
+- Decision: Require exactly `{{first_name}}` (lowercase, underscore, no spaces)
+- Alternatives like `{{firstName}}`, `{{first name}}`, `{{FIRST_NAME}}` are NOT accepted
+- Added test to verify this
