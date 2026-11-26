@@ -232,7 +232,7 @@ def main() -> None:
             print("Usage: mailroom check <issue file>")
             sys.exit(1)
         issue_file = args[0]
-        with open(issue_file, "r") as f:
+        with open(issue_file, "r", encoding="utf-8") as f:
             issue_text = f.read()
         problems = check_issue(issue_text)
         if problems:
