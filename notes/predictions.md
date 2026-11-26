@@ -29,3 +29,11 @@ Tea enthusiasts who want curated loose-leaf teas delivered monthly
 - Subscribers in last 30 days: 7 (includes 2026-10-21)
 - Next send (first Monday of next month): 2026-12-07
 - Send after that (run date 2026-12-07): 2027-01-04
+
+## Step 3 - The 30th of February
+
+### Prediction
+- Mailroom will crash with ValueError: day is out of range for month
+- Last line of error: `ValueError: day is out of range for month`
+- Function named in error: `count_since_days` (line 35 in mailroom/__init__.py)
+- The error does not say which row it was
