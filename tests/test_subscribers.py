@@ -2,7 +2,7 @@
 """Tests for subscriber counting functions."""
 
 from datetime import date
-from mailroom import count_subscribers, count_by_group, count_since_days, next_send_date, check_subject, check_issue
+from mailroom import count_subscribers, count_by_group, count_since_days, next_send_date, check_subject, check_issue_text, parse_issue
 
 
 def test_count_subscribers():
@@ -53,19 +53,19 @@ def test_next_send_date_from_dec_7():
 # Step 5: check_subject tests
 def test_check_subject_normal():
     """Normal subject under 50 chars."""
-    issue = "Subject: The Steep Club opens Monday\n\nBody"
+    issue = parse_issue("Subject: The Steep Club opens Monday\n\nBody")
     assert check_subject(issue) == []
 
 
 def test_check_subject_exactly_50():
     """Subject exactly 50 chars is OK."""
-    issue = "Subject: Your Steep Club box ships on Monday with new teas.\n\nBody"
+    issue = parse_issue("Subject: Your Steep Club box ships on Monday with new teas.\n\nBody")
     assert check_subject(issue) == []
 
 
 def test_check_subject_51_chars():
     """Subject 51 chars is too long."""
-    issue = "Subject: Your Steep Club box ships on Monday with fresh teas\n\nBody"
+    issue = parse_issue("Subject: Your Steep Club box ships on Monday with fresh teas\n\nBody")
     problems = check_subject(issue)
     assert len(problems) == 1
     assert "too long" in problems[0]
@@ -73,7 +73,7 @@ def test_check_subject_51_chars():
 
 def test_check_subject_empty():
     """Empty subject is a problem."""
-    issue = "Subject: \n\nBody"
+    issue = parse_issue("Subject: \n\nBody")
     problems = check_subject(issue)
     assert len(problems) == 1
     assert "empty" in problems[0]
@@ -81,7 +81,7 @@ def test_check_subject_empty():
 
 def test_check_subject_only_spaces():
     """Subject with only spaces is empty."""
-    issue = "Subject:    \n\nBody"
+    issue = parse_issue("Subject:    \n\nBody")
     problems = check_subject(issue)
     assert len(problems) == 1
     assert "empty" in problems[0]
@@ -89,7 +89,7 @@ def test_check_subject_only_spaces():
 
 def test_check_subject_missing():
     """Missing Subject line is a problem."""
-    issue = "No subject here\n\nBody"
+    issue = parse_issue("No subject here\n\nBody")
     problems = check_subject(issue)
     assert len(problems) == 1
     assert "missing" in problems[0]
@@ -99,13 +99,13 @@ def test_check_subject_missing():
 def test_check_issue_valid():
     """issue-01.md passes all checks."""
     with open("issues/issue-01.md", "r") as f:
-        issue = f.read()
-    assert check_issue(issue) == []
+        issue_text = f.read()
+    assert check_issue_text(issue_text) == []
 
 
 def test_check_issue_preview_too_long():
     """Preview over 90 chars fails."""
-    issue = """Subject: Test
+    issue_text = """Subject: Test
 Preview: """ + "x" * 91 + """
 
 Hi {{first_name}},
@@ -113,13 +113,13 @@ Hi {{first_name}},
 
 You're getting this because...
 Unsubscribe: {{unsubscribe_url}}"""
-    problems = check_issue(issue)
+    problems = check_issue_text(issue_text)
     assert any("preview" in p.lower() for p in problems)
 
 
 def test_check_issue_missing_greeting():
     """Missing {{first_name}} fails."""
-    issue = """Subject: Test
+    issue_text = """Subject: Test
 Preview: Short preview
 
 Hi there,
@@ -127,13 +127,13 @@ Hi there,
 
 You're getting this because...
 Unsubscribe: {{unsubscribe_url}}"""
-    problems = check_issue(issue)
+    problems = check_issue_text(issue_text)
     assert any("greeting" in p.lower() or "first_name" in p.lower() for p in problems)
 
 
 def test_check_issue_two_links():
     """Two links fails."""
-    issue = """Subject: Test
+    issue_text = """Subject: Test
 Preview: Short preview
 
 Hi {{first_name}},
@@ -142,18 +142,18 @@ Hi {{first_name}},
 
 You're getting this because...
 Unsubscribe: {{unsubscribe_url}}"""
-    problems = check_issue(issue)
+    problems = check_issue_text(issue_text)
     assert any("link" in p.lower() for p in problems)
 
 
 def test_check_issue_missing_footer_and_greeting():
     """Missing footer and greeting gives two problems."""
-    issue = """Subject: Test
+    issue_text = """Subject: Test
 Preview: Short preview
 
 Hi there,
 [Link](https://example.com)"""
-    problems = check_issue(issue)
+    problems = check_issue_text(issue_text)
     assert len(problems) >= 2
     assert any("greeting" in p.lower() or "first_name" in p.lower() for p in problems)
     assert any("footer" in p.lower() or "unsubscribe" in p.lower() for p in problems)
@@ -165,7 +165,7 @@ def test_check_subject_emoji():
     # 👍🏽 is 2 codepoints (U+1F44D + U+1F3FD)
     subject = "👍🏽 Thanks for joining"
     assert len(subject) == 21  # Python counts codepoints
-    issue = f"Subject: {subject}\n\nBody"
+    issue = parse_issue(f"Subject: {subject}\n\nBody")
     problems = check_subject(issue)
     assert problems == []  # 21 <= 50, so OK
 
@@ -175,12 +175,12 @@ def test_check_greeting_exact_format():
     """Greeting must be exactly {{first_name}} - no alternatives."""
     # These should FAIL (missing greeting)
     for alt in ["{{firstName}}", "{{first name}}", "{{FIRST_NAME}}", "{{ name }}"]:
-        issue = f"Subject: Test\nPreview: Short\n\nHi {alt},\n[Link](https://example.com)\n\nYou're getting this because...\nUnsubscribe: {{unsubscribe_url}}"
-        problems = check_issue(issue)
+        issue_text = f"Subject: Test\nPreview: Short\n\nHi {alt},\n[Link](https://example.com)\n\nYou're getting this because...\nUnsubscribe: {{unsubscribe_url}}"
+        problems = check_issue_text(issue_text)
         assert any("greeting" in p.lower() or "first_name" in p.lower() for p in problems), f"Should fail for {alt}"
 
     # This should PASS
-    issue = """Subject: Test
+    issue_text = """Subject: Test
 Preview: Short
 
 Hi {{first_name}},
@@ -188,5 +188,5 @@ Hi {{first_name}},
 
 You're getting this because...
 Unsubscribe: {{unsubscribe_url}}"""
-    problems = check_issue(issue)
+    problems = check_issue_text(issue_text)
     assert not any("greeting" in p.lower() or "first_name" in p.lower() for p in problems)
